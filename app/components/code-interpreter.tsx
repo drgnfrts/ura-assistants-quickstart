@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./file-viewer.module.css";
+import styles from "./code-interpreter.module.css";
 
 const TrashIcon = () => (
   <svg
@@ -18,40 +18,41 @@ const TrashIcon = () => (
   </svg>
 );
 
-const FileViewer = () => {
+const CodeIntepreter = () => {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchFiles();
-    }, 1000);
-
-    return () => clearInterval(interval);
+    fetchFiles();
   }, []);
 
   const fetchFiles = async () => {
-    const resp = await fetch("/api/assistants/files", {
+    const resp = await fetch("/api/assistants/code-interpreter", {
       method: "GET",
     });
     const data = await resp.json();
     setFiles(data);
   };
 
-  const handleFileDelete = async (fileId) => {
-    await fetch("/api/assistants/files", {
-      method: "DELETE",
-      body: JSON.stringify({ fileId }),
-    });
-  };
-
   const handleFileUpload = async (event) => {
     const data = new FormData();
-    if (event.target.files.length < 0) return;
+    if (event.target.files.length <= 0) return;
     data.append("file", event.target.files[0]);
-    await fetch("/api/assistants/files", {
+    await fetch("/api/assistants/code-interpreter", {
       method: "POST",
       body: data,
     });
+    fetchFiles(); // Refresh file list after upload
+  };
+
+  const handleFileDelete = async (fileId) => {
+    await fetch("/api/assistants/code-interpreter", {
+      method: "DELETE",
+      body: JSON.stringify({ fileId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    fetchFiles(); // Refresh file list after deletion
   };
 
   return (
@@ -62,7 +63,9 @@ const FileViewer = () => {
         }`}
       >
         {files.length === 0 ? (
-          <div className={styles.title}>Attach files to test file search</div>
+          <div className={styles.title}>
+            Attach files to test code interpreter
+          </div>
         ) : (
           files.map((file) => (
             <div key={file.file_id} className={styles.fileEntry}>
@@ -94,4 +97,4 @@ const FileViewer = () => {
   );
 };
 
-export default FileViewer;
+export default CodeIntepreter;

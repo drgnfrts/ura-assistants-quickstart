@@ -7,7 +7,7 @@ const Home = () => {
   const categories = {
     "Basic chat": "basic-chat",
     "Function calling": "function-calling",
-    "File search": "file-search",
+    "Code Interpreter": "code-interpreter",
     All: "all",
   };
 

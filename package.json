@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "next": "14.1.4",
-    "openai": "^4.46.0",
+    "openai": "^4.50.0",
     "react": "^18",
     "react-dom": "^18",
     "react-markdown": "^9.0.1"
@@ -22,5 +22,6 @@
   },
   "prettier": {
     "singleQuote": false
-  }
+  },
+  "packageManager": "pnpm@9.1.0+sha1.217063ce3fcbf44f3051666f38b810f1ddefee4a"
 }

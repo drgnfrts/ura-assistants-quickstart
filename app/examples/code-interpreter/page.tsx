@@ -3,14 +3,14 @@ import React from "react";
 import styles from "../shared/page.module.css";
 
 import Chat from "../../components/chat";
-import FileViewer from "../../components/file-viewer";
+import CodeIntepreter from "../../components/code-interpreter";
 
 const FileSearchPage = () => {
   return (
     <main className={styles.main}>
       <div className={styles.container}>
         <div className={styles.column}>
-          <FileViewer />
+          <CodeIntepreter />
         </div>
         <div className={styles.chatContainer}>
           <div className={styles.chat}>
