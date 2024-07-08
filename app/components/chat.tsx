@@ -38,17 +38,40 @@ const CodeMessage = ({ text }: { text: string }) => {
   );
 };
 
+// const Message = ({ role, text }: MessageProps) => {
+//   switch (role) {
+//     case "user":
+//       return <UserMessage text={text} />;
+//     case "assistant":
+//       return <AssistantMessage text={text} />;
+//     case "code":
+//       return <CodeMessage text={text} />;
+//     default:
+//       return null;
+//   }
+// };
+
 const Message = ({ role, text }: MessageProps) => {
-  switch (role) {
-    case "user":
-      return <UserMessage text={text} />;
-    case "assistant":
-      return <AssistantMessage text={text} />;
-    case "code":
-      return <CodeMessage text={text} />;
-    default:
-      return null;
+  let messageComponent = null;
+
+  if (typeof text === "string") {
+    switch (role) {
+      case "user":
+        messageComponent = <UserMessage text={text} />;
+        break;
+      case "assistant":
+        messageComponent = <AssistantMessage text={text} />;
+        break;
+      case "code":
+        messageComponent = <CodeMessage text={text} />;
+        break;
+      default:
+        // Handle unknown role case
+        break;
+    }
   }
+
+  return messageComponent;
 };
 
 type ChatProps = {
@@ -64,6 +87,7 @@ const Chat = ({
   const [messages, setMessages] = useState([]);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
+  let prevCode = false;
 
   // automatically scroll to bottom of chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -135,6 +159,7 @@ const Chat = ({
 
   // textCreated - create new assistant message
   const handleTextCreated = () => {
+    prevCode = false;
     appendMessage("assistant", "");
   };
 
@@ -142,7 +167,7 @@ const Chat = ({
   const handleTextDelta = (delta) => {
     if (delta.value != null) {
       appendToLastMessage(delta.value);
-    };
+    }
     if (delta.annotations != null) {
       annotateLastMessage(delta.annotations);
     }
@@ -151,19 +176,33 @@ const Chat = ({
   // imageFileDone - show image in chat
   const handleImageFileDone = (image) => {
     appendToLastMessage(`\n![${image.file_id}](/api/files/${image.file_id})\n`);
-  }
+  };
 
   // toolCallCreated - log new tool call
   const toolCallCreated = (toolCall) => {
+    console.log("code interpreter called");
     if (toolCall.type != "code_interpreter") return;
     appendMessage("code", "");
   };
 
   // toolCallDelta - log delta and snapshot for the tool call
   const toolCallDelta = (delta, snapshot) => {
-    if (delta.type != "code_interpreter") return;
-    if (!delta.code_interpreter.input) return;
-    appendToLastMessage(delta.code_interpreter.input);
+    if (delta.type != "code_interpreter") {
+      prevCode = false;
+      return;
+    }
+    const currentInput = delta.code_interpreter.input;
+    // console.log(
+    //   `type:, ${typeof currentInput}: ${currentInput}. prevCode: ${prevCode} `
+    // );
+    if (!prevCode && typeof currentInput === "string") {
+      // Previous input was falsy and current input is truthy
+      prevCode = true;
+      return appendMessage("code", currentInput);
+    } else if (typeof currentInput === "string") {
+      // Both previous input and current input are truthy
+      return appendToLastMessage(currentInput);
+    }
   };
 
   // handleRequiresAction - handle function call
@@ -236,17 +275,16 @@ const Chat = ({
         ...lastMessage,
       };
       annotations.forEach((annotation) => {
-        if (annotation.type === 'file_path') {
+        if (annotation.type === "file_path") {
           updatedLastMessage.text = updatedLastMessage.text.replaceAll(
             annotation.text,
             `/api/files/${annotation.file_path.file_id}`
           );
         }
-      })
+      });
       return [...prevMessages.slice(0, -1), updatedLastMessage];
     });
-    
-  }
+  };
 
   return (
     <div className={styles.chatContainer}>
